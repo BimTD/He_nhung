@@ -40,6 +40,8 @@ def get_chart_data():
         
         # Trả về dữ liệu cộng dồn
         return jsonify(accumulated_data)
+    
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

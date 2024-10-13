@@ -100,10 +100,15 @@ def update_detection_data(count):
 # Hàm điều khiển LED và âm thanh cảnh báo trong một luồng riêng
 def alert_person_detected():
     def alert():
-        GPIO.output(GPIONames[0], GPIO.HIGH)  # Bật LED
-        winsound.Beep(1000, 500)  # Phát âm thanh 1000 Hz trong 500 ms
-        time.sleep(0.5)
-        GPIO.output(GPIONames[0], GPIO.LOW)  # Tắt LED
+        current_time = datetime.now().time()
+        start_time = datetime.strptime("00:01:00", "%H:%M:%S").time()
+        end_time = datetime.strptime("23:59:00", "%H:%M:%S").time()
+
+        if start_time <= current_time <= end_time:
+            GPIO.output(GPIONames[0], GPIO.HIGH)  # Bật LED
+            winsound.Beep(1000, 500)  # Phát âm thanh 1000 Hz trong 500 ms
+            time.sleep(0.5)
+            GPIO.output(GPIONames[0], GPIO.LOW)  # Tắt LED
 
     threading.Thread(target=alert).start()  # Chạy hàm alert trong luồng riêng
 
@@ -144,10 +149,6 @@ def update_lcd_count(count):
 # Khởi tạo điều khiển LED và GUI
 app = LEDController()
 
-# Biến để lưu trữ thời gian phát hiện lần cuối
-last_detected_time = 0  # Thời gian phát hiện lần cuối
-detection_interval = 2  # Thời gian ngưỡng giữa các lần đếm (giây)
-
 while True:
     ret, frame = cap.read()  # Đọc khung hình từ camera
 
@@ -160,8 +161,6 @@ while True:
     results = model(frame_resized)  # Phát hiện người trong khung hình
 
     person_detected = False  # Biến kiểm tra trạng thái phát hiện người
-    current_time = time.time()  # Lấy thời gian hiện tại
-
     for r in results:
         for box in r.boxes:
             if int(box.cls[0]) == 0:  # Lớp '0' là 'người'
@@ -169,13 +168,11 @@ while True:
                 x1, y1, x2, y2 = map(int, box.xyxy[0])  # Lấy tọa độ khung bao
                 cv2.rectangle(frame_resized, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Vẽ khung bao xung quanh người phát hiện
 
-    # Chỉ đếm khi phát hiện người và thời gian giữa hai lần phát hiện đủ lớn
-    if person_detected and (current_time - last_detected_time > detection_interval):
+    if person_detected:
         person_count += 1  # Tăng biến đếm số người phát hiện
         alert_person_detected()  # Gọi hàm cảnh báo khi phát hiện người
         update_lcd_count(person_count)  # Cập nhật số lượng người trên LCD
         update_detection_data(1)  # Cập nhật dữ liệu phát hiện
-        last_detected_time = current_time  # Cập nhật thời gian phát hiện mới
 
     app.update_status(person_detected)  # Cập nhật trạng thái trên GUI
 

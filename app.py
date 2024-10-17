@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 import json
 from collections import defaultdict
+import os
 
 app = Flask(__name__)
 
@@ -12,6 +13,15 @@ def read_json_data():
     except FileNotFoundError:
         data = {}
     return data
+
+# Đọc danh sách video từ file JSON
+def read_video_paths():
+    try:
+        with open('videos_path.json', 'r') as json_file:
+            video_data = json.load(json_file)
+    except FileNotFoundError:
+        video_data = {}
+    return video_data.get("videos", [])
 
 # Trang index sẽ hiển thị biểu đồ
 @app.route('/')
@@ -40,8 +50,12 @@ def get_chart_data():
         
         # Trả về dữ liệu cộng dồn
         return jsonify(accumulated_data)
-    
 
+# API để lấy danh sách video
+@app.route('/get_video_paths')
+def get_video_paths():
+    video_paths = read_video_paths()
+    return jsonify(video_paths)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

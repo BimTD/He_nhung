@@ -37,6 +37,10 @@ if not cap.isOpened():
     print("Không thể truy cập camera.")
     exit()
 
+# Khởi tạo ghi video (biến này sẽ lưu đối tượng VideoWriter)
+video_writer = None
+video_filenames = []  # Danh sách để lưu các tên tệp video
+
 # Hàm lấy tháng hiện tại
 def get_current_month():
     today = datetime.now()
@@ -73,7 +77,7 @@ def get_time_period():
 # Tải dữ liệu phát hiện hiện có hoặc tạo cấu trúc mới
 detection_data = load_data_from_json()
 
-# Hàm cập nhật dữ liệu phát hiện (hàng ngày và hàng tháng)
+# Hàm cập nhật dữ liệu phát hiện (không lưu video_path)
 def update_detection_data(count):
     today = datetime.now().strftime("%Y-%m-%d")  # Ngày hiện tại làm khóa
     current_month = get_current_month()  # Tháng hiện tại làm khóa
@@ -82,7 +86,7 @@ def update_detection_data(count):
 
     # Khởi tạo cấu trúc dữ liệu hàng ngày nếu thiếu
     if today not in detection_data:
-        detection_data[today] = {"Sáng": 0, "Trưa": 0, "Chiều": 0, "Tối": 0}
+        detection_data[today] = {"Sáng": 0, "Trưa": 0, "Chiều": 0, "Tối": 0, "videos": []}
 
     # Cập nhật số lượng hàng ngày
     detection_data[today][time_period] += count
@@ -90,11 +94,11 @@ def update_detection_data(count):
     # Khởi tạo cấu trúc dữ liệu hàng tháng nếu thiếu
     if current_month not in detection_data:
         detection_data[current_month] = {"Sáng": 0, "Trưa": 0, "Chiều": 0, "Tối": 0}
-    
+
     # Cập nhật số lượng hàng tháng
     detection_data[current_month][time_period] += count
 
-    # Lưu dữ liệu đã cập nhật vào tệp JSON
+    # Lưu dữ liệu đã cập nhật vào tệp JSON (không lưu video path)
     save_data_to_json()
 
 # Hàm điều khiển LED và âm thanh cảnh báo trong một luồng riêng
@@ -146,8 +150,20 @@ app = LEDController()
 
 # Biến để lưu trữ thời gian phát hiện lần cuối
 last_detected_time = 0  # Thời gian phát hiện lần cuối
-detection_interval = 2  # Thời gian ngưỡng giữa các lần đếm (giây)
+detection_interval = 1  # Thời gian ngưỡng giữa các lần đếm (giây)
 
+# Bắt đầu ghi video với tên tệp duy nhất
+def start_recording_video():
+    global video_writer
+    # Tạo tên tệp video duy nhất bằng timestamp
+    video_filename = f'output_video_{datetime.now().strftime("%Y%m%d_%H%M%S")}.avi'
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    video_writer = cv2.VideoWriter(video_filename, fourcc, 20.0, (640, 480))
+    video_filenames.append(video_filename)  # Lưu tên tệp video vào danh sách
+    print(f"Bắt đầu ghi video vào {video_filename}")
+    return video_filename
+
+# Bắt đầu quy trình phát hiện
 while True:
     ret, frame = cap.read()  # Đọc khung hình từ camera
 
@@ -165,25 +181,59 @@ while True:
     for r in results:
         for box in r.boxes:
             if int(box.cls[0]) == 0:  # Lớp '0' là 'người'
-                person_detected = True
+                person_detected = True  # Đánh dấu rằng có người được phát hiện
                 x1, y1, x2, y2 = map(int, box.xyxy[0])  # Lấy tọa độ khung bao
                 cv2.rectangle(frame_resized, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Vẽ khung bao xung quanh người phát hiện
 
-    # Chỉ đếm khi phát hiện người và thời gian giữa hai lần phát hiện đủ lớn
-    if person_detected and (current_time - last_detected_time > detection_interval):
-        person_count += 1  # Tăng biến đếm số người phát hiện
-        alert_person_detected()  # Gọi hàm cảnh báo khi phát hiện người
-        update_lcd_count(person_count)  # Cập nhật số lượng người trên LCD
-        update_detection_data(1)  # Cập nhật dữ liệu phát hiện
-        last_detected_time = current_time  # Cập nhật thời gian phát hiện mới
+    app.update_status(person_detected)  # Cập nhật GUI khi phát hiện hoặc không phát hiện người
 
-    app.update_status(person_detected)  # Cập nhật trạng thái trên GUI
+    # Nếu phát hiện người thì bắt đầu ghi video
+    if person_detected and video_writer is None:
+        video_filename = start_recording_video()  # Ghi video với tên tệp duy nhất
 
-    cv2.imshow('Phát hiện người với YOLOv8', frame_resized)  # Hiển thị khung hình với người phát hiện
+    if video_writer is not None:
+        video_writer.write(frame_resized)  # Ghi khung hình vào tệp video
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):  # Nhấn 'q' để thoát
+    # Nếu phát hiện người và đủ thời gian kể từ lần cuối, thực hiện các hành động
+    if person_detected and current_time - last_detected_time > detection_interval:
+        alert_person_detected()  # Kích hoạt cảnh báo
+        person_count += 1  # Tăng số đếm
+        update_lcd_count(person_count)  # Cập nhật đếm người lên LCD
+        update_detection_data(1)  # Cập nhật số lượng người phát hiện
+        last_detected_time = current_time  # Cập nhật thời gian phát hiện lần cuối
+
+    # Hiển thị khung hình đã phát hiện
+    cv2.imshow("Camera An Ninh", frame_resized)
+
+    # Thoát vòng lặp nếu nhấn phím 'q'
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-cap.release()  # Giải phóng camera
-cv2.destroyAllWindows()  # Đóng tất cả cửa sổ
-GPIO.cleanup()  # Dọn dẹp GPIO
+# Khi kết thúc, giải phóng tài nguyên
+cap.release()
+
+# Dừng ghi video khi thoát
+if video_writer is not None:
+    video_writer.release()
+
+cv2.destroyAllWindows()
+
+# Đọc dữ liệu hiện có từ 'videos_path.json'
+if os.path.exists('videos_path.json'):
+    with open('videos_path.json', 'r') as f:
+        try:
+            videos_data = json.load(f)
+        except json.JSONDecodeError:
+            videos_data = {"videos": []}  # Nếu tệp bị lỗi, khởi tạo rỗng
+else:
+    videos_data = {"videos": []}  # Khởi tạo rỗng nếu tệp chưa tồn tại
+
+# Thêm các video filenames mới vào danh sách
+videos_data["videos"].extend(video_filenames)
+
+# Lưu lại dữ liệu với các đường dẫn video mới vào tệp 'videos_path.json'
+with open('videos_path.json', 'w') as f:
+    json.dump(videos_data, f, indent=4)
+
+print(f"Video paths đã được cập nhật và lưu vào tệp 'videos_path.json'.")
+

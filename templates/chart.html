@@ -1,75 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"> <!-- Đặt kiểu mã hóa cho tài liệu là UTF-8 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Thiết lập chiều rộng và tỷ lệ cho các thiết bị di động -->
-    <title>Biểu đồ phát hiện người</title> <!-- Tiêu đề trang web -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <!-- Thư viện Chart.js cho việc tạo biểu đồ -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biểu đồ phát hiện người</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif; /* Phông chữ cho trang */
-            margin: 0; /* Xóa lề của trang */
-            padding: 20px; /* Thêm khoảng đệm bên trong */
-            background-color: #eef2f3; /* Màu nền sáng xám */
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #eef2f3;
         }
         .chart-container {
-            max-width: 800px; /* Chiều rộng tối đa của khung biểu đồ */
-            margin: auto; /* Căn giữa khung biểu đồ */
-            padding: 30px; /* Thêm khoảng đệm bên trong */
-            background-color: #fff; /* Màu nền trắng cho khung */
-            border-radius: 12px; /* Bo tròn các góc của khung */
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ cho khung */
-            border: 1px solid #ddd; /* Đường viền nhẹ cho khung */
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
         }
         h1 {
-            text-align: center; /* Căn giữa tiêu đề */
-            color: #333; /* Màu chữ tối */
-            margin-bottom: 20px; /* Khoảng cách dưới tiêu đề */
-            font-size: 2em; /* Kích thước chữ lớn hơn */
-            letter-spacing: 1px; /* Khoảng cách giữa các chữ cái */
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2em;
+            letter-spacing: 1px;
         }
         canvas {
-            display: block; /* Hiển thị canvas như một khối */
-            width: 100%; /* Chiều rộng 100% */
-            height: auto; /* Chiều cao tự động */
-            margin: 20px 0; /* Khoảng cách quanh canvas */
-            border-radius: 8px; /* Bo tròn các góc của canvas */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ cho canvas */
+            display: block;
+            width: 100%;
+            height: auto;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         select, input {
-            margin-bottom: 15px; /* Khoảng cách dưới các trường nhập liệu */
-            padding: 10px; /* Khoảng đệm cho các trường nhập liệu */
-            border-radius: 5px; /* Bo tròn các góc */
-            border: 1px solid #ccc; /* Đường viền nhẹ */
-            width: calc(50% - 20px); /* Chiều rộng linh hoạt */
-            box-sizing: border-box; /* Bao gồm padding vào chiều rộng */
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: calc(50% - 20px);
+            box-sizing: border-box;
         }
         select:focus, input:focus {
-            outline: none; /* Xóa đường viền khi có tiêu điểm */
-            border-color: #007bff; /* Thay đổi màu đường viền khi có tiêu điểm */
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Thêm bóng khi có tiêu điểm */
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
         }
-        /* Căn giữa các trường chọn */
         .center {
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-direction: column; /* Xếp các mục theo chiều dọc */
+            flex-direction: column;
+        }
+        .video-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+        video {
+            max-width: 100%;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
     <div class="chart-container">
-        <h1>Phát hiện người theo khoảng thời gian</h1> <!-- Tiêu đề chính của trang -->
-        
+        <h1>Phát hiện người theo khoảng thời gian</h1>
+
         <div class="center">
-            <!-- Lựa chọn khoảng thời gian -->
             <select id="timeRange" onchange="updateChart()">
                 <option value="day">Ngày</option>
                 <option value="month">Tháng</option>
             </select>
 
-            <!-- Lựa chọn loại biểu đồ -->
             <select id="chartType" onchange="updateChart()">
                 <option value="bar">Biểu đồ cột</option>
                 <option value="line">Biểu đồ đường</option>
@@ -78,78 +83,81 @@
         </div>
 
         <div class="center">
-            <!-- Nhập ngày -->
             <input type="date" id="dateInput" onchange="updateChart()" />
-            <!-- Nhập tháng -->
             <input type="month" id="monthInput" onchange="updateChart()" style="display: none;" />
         </div>
 
-        <!-- Canvas cho biểu đồ -->
         <canvas id="myChart"></canvas>  
     </div>
 
+    <div class="video-container">
+        <h2>Xem Video Phát Hiện Người</h2>
+        <video id="videoPlayer" controls>
+            <source id="videoSource" src="" type="video/mp4">
+            Trình duyệt của bạn không hỗ trợ video.
+        </video>
+        <br>
+        <select id="videoSelect" onchange="updateVideo()"></select>
+    </div>
+
     <script>
-        let myChart; // Biến để lưu trữ đối tượng biểu đồ
+        let myChart; // Biến để lưu đối tượng biểu đồ
 
-        // Hàm cập nhật biểu đồ dựa trên lựa chọn của người dùng
+        // Cập nhật biểu đồ dựa trên lựa chọn của người dùng
         function updateChart() {
-            const timeRange = document.getElementById('timeRange').value; // Lấy khoảng thời gian
-            const chartType = document.getElementById('chartType').value; // Lấy loại biểu đồ
-            let apiUrl = '/get_chart_data?range=' + timeRange; // Đường dẫn API để lấy dữ liệu biểu đồ
+            const timeRange = document.getElementById('timeRange').value;
+            const chartType = document.getElementById('chartType').value;
+            let apiUrl = '/get_chart_data?range=' + timeRange;
 
-            // Xử lý khi khoảng thời gian là 'ngày'
             if (timeRange === 'day') {
-                const selectedDate = document.getElementById('dateInput').value || getCurrentDate(); // Ngày được chọn
-                apiUrl += '&date=' + selectedDate; // Thêm ngày vào URL
-                document.getElementById('dateInput').style.display = 'block'; // Hiện trường nhập ngày
-                document.getElementById('monthInput').style.display = 'none'; // Ẩn trường nhập tháng
-            } 
-            // Xử lý khi khoảng thời gian là 'tháng'
-            else if (timeRange === 'month') {
-                const selectedMonth = document.getElementById('monthInput').value || getCurrentMonth(); // Tháng được chọn
-                apiUrl += '&month=' + selectedMonth; // Thêm tháng vào URL
-                document.getElementById('dateInput').style.display = 'none'; // Ẩn trường nhập ngày
-                document.getElementById('monthInput').style.display = 'block'; // Hiện trường nhập tháng
+                const selectedDate = document.getElementById('dateInput').value || getCurrentDate();
+                apiUrl += '&date=' + selectedDate;
+                document.getElementById('dateInput').style.display = 'block';
+                document.getElementById('monthInput').style.display = 'none';
+            } else if (timeRange === 'month') {
+                const selectedMonth = document.getElementById('monthInput').value || getCurrentMonth();
+                apiUrl += '&month=' + selectedMonth;
+                document.getElementById('dateInput').style.display = 'none';
+                document.getElementById('monthInput').style.display = 'block';
             }
 
-            // Gửi yêu cầu đến API và cập nhật biểu đồ
             fetch(apiUrl)
-            .then(response => response.json()) // Phân tích dữ liệu JSON trả về
+            .then(response => response.json())
             .then(data => {
-                const labels = ['Sáng', 'Trưa', 'Chiều', 'Tối']; // Nhãn cho các khoảng thời gian
-                const chartData = [data.Sáng || 0, data.Trưa || 0, data.Chiều || 0, data.Tối || 0]; // Dữ liệu cho biểu đồ
+                const labels = ['Sáng', 'Trưa', 'Chiều', 'Tối'];
+                const chartData = [data.Sáng || 0, data.Trưa || 0, data.Chiều || 0, data.Tối || 0];
 
                 if (myChart) {
-                    myChart.destroy(); // Hủy biểu đồ cũ nếu tồn tại
+                    myChart.destroy();
                 }
 
-                const ctx = document.getElementById('myChart').getContext('2d'); // Lấy ngữ cảnh cho canvas
+                const ctx = document.getElementById('myChart').getContext('2d');
                 myChart = new Chart(ctx, {
-                    type: chartType, // Loại biểu đồ
+                    type: chartType,
                     data: {
-                        labels: labels, // Nhãn cho trục x
+                        labels: labels,
                         datasets: [{
-                            label: 'Số người phát hiện', // Nhãn cho bộ dữ liệu
-                            data: chartData, // Dữ liệu cho biểu đồ
+                            label: 'Số người phát hiện',
+                            data: chartData,
                             backgroundColor: [
-                                'rgba(255, 99, 132, 0.7)', // Màu nền cho các cột
-                                'rgba(54, 162, 235, 0.7)', 
-                                'rgba(255, 206, 86, 0.7)', 
-                                'rgba(75, 192, 192, 0.7)' 
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(255, 206, 86, 0.7)',
+                                'rgba(75, 192, 192, 0.7)'
                             ],
                             borderColor: [
-                                'rgba(255, 99, 132, 1)', // Màu viền cho các cột
+                                'rgba(255, 99, 132, 1)',
                                 'rgba(54, 162, 235, 1)',
                                 'rgba(255, 206, 86, 1)',
                                 'rgba(75, 192, 192, 1)'
                             ],
-                            borderWidth: 1 // Độ dày của viền
+                            borderWidth: 1
                         }]
                     },
                     options: {
                         scales: {
                             y: {
-                                beginAtZero: true // Bắt đầu trục y từ 0
+                                beginAtZero: true
                             }
                         }
                     }
@@ -157,29 +165,66 @@
             });
         }
 
-        // Hàm lấy ngày hiện tại theo định dạng YYYY-MM-DD
+        // Lấy ngày hiện tại ở định dạng YYYY-MM-DD
         function getCurrentDate() {
-            const today = new Date(); // Lấy ngày hiện tại
-            const year = today.getFullYear(); // Lấy năm hiện tại
-            const month = String(today.getMonth() + 1).padStart(2, '0'); // Lấy tháng hiện tại
-            const day = String(today.getDate()).padStart(2, '0'); // Lấy ngày hiện tại
-            return `${year}-${month}-${day}`; // Trả về theo định dạng YYYY-MM-DD
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
-        // Hàm lấy tháng hiện tại theo định dạng YYYY-MM
+        // Lấy tháng hiện tại ở định dạng YYYY-MM
         function getCurrentMonth() {
-            const today = new Date(); // Lấy ngày hiện tại
-            const year = today.getFullYear(); // Lấy năm hiện tại
-            const month = String(today.getMonth() + 1).padStart(2, '0'); // Lấy tháng hiện tại
-            return `${year}-${month}`; // Trả về theo định dạng YYYY-MM
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}`;
         }
 
-        // Khởi tạo ngày hoặc tháng hiện tại trong các trường nhập liệu
+        // Cập nhật video khi người dùng chọn video mới
+        function updateVideo() {
+            const videoSelect = document.getElementById('videoSelect');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const selectedVideo = videoSelect.value;
+
+            // Cập nhật đường dẫn video
+            videoPlayer.src = selectedVideo;
+            videoPlayer.load();
+            videoPlayer.play();
+        }
+
+        // Tải danh sách video và thêm vào dropdown
+        function loadVideos() {
+            fetch('/get_video_paths')
+            .then(response => response.json())
+            .then(videoPaths => {
+                const videoSelect = document.getElementById('videoSelect');
+                videoSelect.innerHTML = '';
+
+                // Thêm từng video vào dropdown
+                videoPaths.forEach(videoPath => {
+                    const option = document.createElement('option');
+                    option.value = videoPath;
+                    option.textContent = videoPath;
+                    videoSelect.appendChild(option);
+                });
+
+                // Chọn video đầu tiên
+                if (videoPaths.length > 0) {
+                    videoSelect.value = videoPaths[0];
+                    updateVideo(); // Tự động phát video đầu tiên
+                }
+            });
+        }
+
+        // Khởi tạo ngày/tháng hiện tại và tải danh sách video khi trang được tải
         window.onload = function() {
             const dateInput = document.getElementById('dateInput'); // Lấy trường nhập ngày
             const monthInput = document.getElementById('monthInput'); // Lấy trường nhập tháng
             dateInput.value = getCurrentDate(); // Gán giá trị ngày hiện tại
             monthInput.value = getCurrentMonth(); // Gán giá trị tháng hiện tại
+            loadVideos(); // Tải danh sách video
             updateChart(); // Cập nhật biểu đồ khi tải trang
         };
     </script>
